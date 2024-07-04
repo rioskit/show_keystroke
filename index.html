@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KeyStroke Visualizer</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        #history {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .history-key {
+            font-size: 16px;
+            padding: 5px 10px;
+            margin: 0 2px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            white-space: nowrap;
+        }
+        #key-display-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+        #key-display-wrapper {
+            height: 30vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #key-display {
+            font-size: 10vw;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+            min-width: 200px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        #modifier-display {
+            font-size: 2vw;
+            opacity: 0.6;
+            height: 3vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="history"></div>
+    <div id="key-display-container">
+        <div id="key-display-wrapper">
+            <div id="key-display">キーを押してください</div>
+        </div>
+        <div id="modifier-display"></div>
+    </div>
+
+    <script>
+        const keyDisplay = document.getElementById('key-display');
+        const modifierDisplay = document.getElementById('modifier-display');
+        const history = document.getElementById('history');
+        let keyHistory = [];
+        const colorMap = new Map();
+
+        function updateHistory() {
+            history.innerHTML = '';
+            keyHistory.forEach(key => {
+                const keyElement = document.createElement('div');
+                keyElement.className = 'history-key';
+                keyElement.textContent = key;
+                history.appendChild(keyElement);
+            });
+        }
+
+        function getMaxKeys() {
+            const historyWidth = history.clientWidth;
+            const keyWidth = 50;
+            return Math.floor(historyWidth / keyWidth);
+        }
+
+        function getRandomColor() {
+            return '#' + Math.floor(Math.random()*16777215).toString(16);
+        }
+
+        function getContrastColor(hexcolor) {
+            const r = parseInt(hexcolor.substr(1,2),16);
+            const g = parseInt(hexcolor.substr(3,2),16);
+            const b = parseInt(hexcolor.substr(5,2),16);
+            const yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? 'black' : 'white';
+        }
+
+        document.addEventListener('keydown', (event) => {
+            event.preventDefault();
+            let key = event.key;
+            let modifiers = [];
+
+            if (event.ctrlKey) modifiers.push('Ctrl');
+            if (event.altKey) modifiers.push('Alt');
+            if (event.shiftKey) modifiers.push('Shift');
+            if (event.metaKey) modifiers.push('Cmd');
+
+            if (key === ' ') key = 'Space';
+            if (key === 'Control') key = 'Ctrl';
+            if (key === 'Alt') key = 'Alt';
+            if (key === 'Shift') key = 'Shift';
+            if (key === 'Meta') key = 'Cmd';
+
+            modifierDisplay.textContent = modifiers.join(' + ');
+
+            if (!['Ctrl', 'Alt', 'Shift', 'Cmd'].includes(key)) {
+                keyDisplay.textContent = key;
+
+                if (!colorMap.has(key)) {
+                    colorMap.set(key, getRandomColor());
+                }
+                const backgroundColor = colorMap.get(key);
+                const textColor = getContrastColor(backgroundColor);
+                keyDisplay.style.backgroundColor = backgroundColor;
+                keyDisplay.style.color = textColor;
+
+                keyHistory.push(key);
+                
+                const maxKeys = getMaxKeys();
+                if (keyHistory.length > maxKeys) {
+                    keyHistory = keyHistory.slice(-maxKeys);
+                }
+
+                updateHistory();
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            let modifiers = [];
+            if (event.ctrlKey) modifiers.push('Ctrl');
+            if (event.altKey) modifiers.push('Alt');
+            if (event.shiftKey) modifiers.push('Shift');
+            if (event.metaKey) modifiers.push('Cmd');
+            modifierDisplay.textContent = modifiers.join(' + ');
+        });
+
+        function resizeHandler() {
+            const maxKeys = getMaxKeys();
+            if (keyHistory.length > maxKeys) {
+                keyHistory = keyHistory.slice(-maxKeys);
+                updateHistory();
+            }
+        }
+
+        window.addEventListener('resize', resizeHandler);
+        window.addEventListener('load', resizeHandler);
+    </script>
+</body>
+</html>
