@@ -125,6 +125,7 @@
             if (key === 'Alt') key = 'Alt';
             if (key === 'Shift') key = 'Shift';
             if (key === 'Meta') key = 'Cmd';
+            if (/^[a-z]$/i.test(key)) key = key.toUpperCase();
 
             modifierDisplay.textContent = modifiers.join(' + ');
 
